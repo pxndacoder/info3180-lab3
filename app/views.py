@@ -1,6 +1,8 @@
-from app import app
-from flask import render_template, request, redirect, url_for, flash
 
+from app import app, mail
+from flask import render_template, request, redirect, url_for, flash
+from flask_mail import Message
+from app.forms import ContactForm
 
 ###
 # Routing for your application.
@@ -56,3 +58,30 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    form = ContactForm()
+    
+    if form.validate_on_submit():
+        # Get data from the form
+        name = form.name.data
+        email = form.email.data
+        subject = form.subject.data
+        message_body = form.message.data
+
+        # Create the Message object
+        msg = Message(
+            subject=subject,
+            sender=(name, email),
+            recipients=["to@example.com"] 
+        )
+        msg.body = message_body
+
+        # Send the email via Mailtrap
+        mail.send(msg)
+
+        flash('Your message was sent successfully!', 'success')
+        return redirect(url_for('home'))
+
+    return render_template('contact.html', form=form)
